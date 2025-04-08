@@ -5,9 +5,10 @@ import Callback from './components/Callback';
 import Dashboard from './components/Dashboard'; // main app after auth
 
 function App() {
-  console.log(process.env.PUBLIC_URL);
+  const isProduction = window.location.hostname === "papillonlibre.github.io";
+  const basename = isProduction ? "/Mergify" : "/";  // "/" for local, "/Mergify" for production
   return (
-    <Router basename={process.env.PUBLIC_URL || "/"}> {/* this will work locally */}
+    <Router basename={basename}>
       <Routes>
         <Route path="/" element={<SpotifyAuth />} />
         <Route path="/callback" element={<Callback />} />
