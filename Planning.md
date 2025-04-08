@@ -19,4 +19,6 @@ Playlist Backup: Provide an option for users to create a backup of their origina
 
 Integration with Spotify Features: Integrate with Spotify's features, such as the ability to save the merged playlist to their Spotify library, share the merged playlist on social media, or play the merged playlist directly within your app.
 
+Music visualization: Create a visual representation of a user's music library to somehow visualize percentage overlap accross playlists.
+
 View that shows the user songs that are in their Liked library but not in any other playlist they made. This could signal songs that should be made into a playlist.
