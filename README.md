@@ -22,3 +22,11 @@ Command is venv\Scripts\activate on Windows to activate the venv
 
 For this project, I chose to implement the Authorization Code Flow for better security practice and longer lasting tokens. This flow was implemented with session cookies. This should allow the Spotify Authorization to be more secure and subscribe to best practices as opposed to Implicit Grant Flow. Therefore, here is the workflow of the implemented authorization flow implemented for Mergify.
 
+1. User visits https://papillonlibre.github.io/Mergify/
+2. User clicks “Login to Spotify”  Button → redirects to Flask backend: https://your-flask-api.com/login TODO Once backend is hosted, update this comment
+3. Flask redirects to Spotify login
+4. After auth, Spotify redirects to: https://papillonlibre.github.io/Mergify/#/callback?code=...
+5. Callback.js exchanges code with Flask backend: POST https://your-flask-api.com/callback TODO Once backend is hosted, update this comment
+6. React saves access token and routes to /#/dashboard
+
+This works because GitHub Pages handles my static files, HashRouter avoids 404s associated with the fact that GitHub Pages cannot handle Browser Router, and Flask runs separately and securely manages client secrets. 
