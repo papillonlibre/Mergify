@@ -13,3 +13,12 @@ The dashboard is at https://developer.spotify.com/dashboard
 
 ## How to host Flask websites
 https://github.com/orgs/community/discussions/68841
+
+
+## Python virtual env
+Command is venv\Scripts\activate on Windows to activate the venv
+
+## Authorization Flow
+
+For this project, I chose to implement the Authorization Code Flow for better security practice and longer lasting tokens. This flow was implemented with session cookies. This should allow the Spotify Authorization to be more secure and subscribe to best practices as opposed to Implicit Grant Flow. Therefore, here is the workflow of the implemented authorization flow implemented for Mergify.
+
