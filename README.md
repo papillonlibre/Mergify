@@ -16,7 +16,8 @@ https://github.com/orgs/community/discussions/68841
 
 
 ## Python virtual env
-Command is venv\Scripts\activate on Windows to activate the venv
+Command is `venv\Scripts\activate` on Windows to activate the venv
+From there, python `.\app.py    ` will run the Flask server.
 
 ## Authorization Flow
 

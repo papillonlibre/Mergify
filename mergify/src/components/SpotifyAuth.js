@@ -1,6 +1,7 @@
 // SpotifyAuth.js
 import React, { useEffect, useState } from 'react';
 import spotifyApi from '../utils/spotify';
+import Header from './Header'
 
 const SpotifyAuth = () => {
   const [token, setToken] = useState(localStorage.getItem('spotify_access_token'));
@@ -41,7 +42,7 @@ const SpotifyAuth = () => {
 
   return (
     <div>
-      <h1>Mergify</h1>
+      <Header />
       {token ? (
         <button onClick={handleLogout}>Logout</button>
       ) : (
