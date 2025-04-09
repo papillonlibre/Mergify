@@ -1,8 +1,9 @@
 import React from 'react';
-import { HashRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import SpotifyAuth from './components/SpotifyAuth';
 import Callback from './components/Callback';
 import Dashboard from './components/Dashboard'; // main app after auth
+import PageNotFound from './components/PageNotFound';
 
 function App() {
   const isProduction = window.location.hostname === "papillonlibre.github.io";

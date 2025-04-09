@@ -8,11 +8,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Allow requests from React dev server
+CORS(app)  # Allow cross-origin from React frontend
 
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
+FRONTEND_URI = os.getenv("FRONTEND_URI")
 
 @app.route('/')
 def home():
@@ -32,7 +33,21 @@ def login():
 
 @app.route('/callback')
 def callback():
+    # Capture the query parameters from Spotify's redirect
+    code = request.args.get('code')
+
+    if not code:
+        return redirect(FRONTEND_URI)  # You can redirect to a custom error page if needed
+
+    # Add the `code` to the frontend redirect URL
+    redirect_url = f"{FRONTEND_URI}/callback?code={code}"
+    return redirect(redirect_url)
+
+@app.route('/exchange_token', methods=["POST"])
+def exchange_token():
     code = request.json.get("code")
+    if not code:
+        return jsonify({"error": "No code found in request"}), 400
 
     token_url = "https://accounts.spotify.com/api/token"
     payload = {
@@ -50,18 +65,13 @@ def callback():
     r = requests.post(token_url, data=payload, headers=headers)
     token_data = r.json()
 
-    access_token = token_data.get("access_token")
-    refresh_token = token_data.get("refresh_token")
-
-    if not access_token:
+    if r.status_code != 200 or "access_token" not in token_data:
         return jsonify({"error": "Token exchange failed", "details": token_data}), 400
 
-    # Create response and set HttpOnly cookie
-    resp = make_response(redirect(FRONTEND_URI))
-    resp.set_cookie("spotify_access_token", access_token, httponly=True, secure=False, samesite="Lax")
-    resp.set_cookie("spotify_refresh_token", refresh_token, httponly=True, secure=False, samesite="Lax")
-
-    return resp
+    return jsonify({
+        "access_token": token_data["access_token"],
+        "refresh_token": token_data["refresh_token"]
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
