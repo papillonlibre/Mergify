@@ -20,7 +20,7 @@ From there, python `.\app.py` will run the Flask server.
 
 ## Authorization Flow
 
-For this project, I chose to implement the Authorization Code Flow for better security practice and longer lasting tokens. This flow was implemented with session cookies. This should allow the Spotify Authorization to be more secure and subscribe to best practices as opposed to Implicit Grant Flow. Therefore, here is the workflow of the implemented authorization flow implemented for Mergify.
+For this project, I chose to implement the Authorization Code Flow for better security practice and longer lasting tokens. This flow was implemented with session cookies. This should allow the Spotify Authorization to be more secure and subscribe to best practices as opposed to Implicit Grant Flow. The basis of this implementation (conducted on a Flask Python server on the backend) was based on the [Spotify example flow](https://developer.spotify.com/documentation/web-api/tutorials/code-flow).Therefore, here is the workflow of the implemented authorization flow implemented for Mergify.
 
 1. User visits https://papillonlibre.github.io/Mergify/
 2. User clicks “Login to Spotify”  Button → redirects to Flask backend: https://your-flask-api.com/login TODO Once backend is hosted, update this comment
