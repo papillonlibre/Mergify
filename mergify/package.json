@@ -1,6 +1,6 @@
 {
   "name": "mergify",
-  "homepage": "https://papillonlibre.github.io/Mergify",
+  "homepage": "/Mergify",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

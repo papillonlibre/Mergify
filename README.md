@@ -1,10 +1,9 @@
 # Mergify
+Welcome to Mergify, a web app built on React that leverages the Spotify API to allow users to perform some advanced funcionality not natively supported in Spotify such as : merge multiple playlists together, indicate playlists that only appear in one playlist, and more!
 
-## Application Goal
-- leverage Spotify API to merge playlists together
 ## Important links
-Can be accessed at: https://papillonlibre.github.io/Mergify/
-The dashboard is at https://developer.spotify.com/dashboard
+The app deployment can be accessed at: https://papillonlibre.github.io/Mergify/
+The developer dashboard is at https://developer.spotify.com/dashboard if you have the right credentials.
 
 ## Dependencies needed
 
@@ -16,8 +15,8 @@ https://github.com/orgs/community/discussions/68841
 
 
 ## Python virtual env
-Command is `venv\Scripts\activate` on Windows to activate the venv
-From there, python `.\app.py    ` will run the Flask server.
+Command is `venv\Scripts\activate` on Windows to activate the venv from within the `mergify\src\backend` folder.
+From there, python `.\app.py` will run the Flask server.
 
 ## Authorization Flow
 
