@@ -1,11 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import spotifyApi from '../utils/spotify';
 
 const Callback = () => {
   const navigate = useNavigate();
+  const hasFetched = useRef(false); // <-- import useRef
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
     const searchParams = new URLSearchParams(window.location.search);
     const code = searchParams.get('code');
 
@@ -46,5 +50,6 @@ const Callback = () => {
 
   return <p>Processing authentication...</p>;
 };
+
 
 export default Callback;
