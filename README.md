@@ -15,6 +15,12 @@ https://github.com/orgs/community/discussions/68841
 
 
 ## Python virtual env
+
+Steps to create the virtual env
+- `pip install virtualenv`
+- `virtualenv venv`
+- activate the venv
+- `pip install -r requirements.txt`
 Command is `venv\Scripts\activate` on Windows to activate the venv from within the `mergify\src\backend` folder.
 From there, python `.\app.py` will run the Flask server.
 
