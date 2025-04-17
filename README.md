@@ -8,7 +8,7 @@ The developer dashboard is at https://developer.spotify.com/dashboard if you hav
 ## Dependencies needed
 
 - For Tailwind, to integrate with React, it is necessary to ensure that the following packages are installed through npm with the following command: `npm install tailwindcss postcss autoprefixer`. Run this command from within the mergify root folder.
-    - For Tailwind, the command `npx tailwindcss init` creates `tailwind.config.js` in the project root. This file is what configures Tailwind CSS for the project overall.
+    - For Tailwind, the command `npx tailwindcss init -p` creates `tailwind.config.js` in the project root. This file is what configures Tailwind CSS for the project overall.
 
 ## How to host Flask websites
 https://github.com/orgs/community/discussions/68841
@@ -22,7 +22,9 @@ Steps to create the virtual env
 - activate the venv
 - `pip install -r requirements.txt`
 Command is `venv\Scripts\activate` on Windows to activate the venv from within the `mergify\src\backend` folder.
-From there, python `.\app.py` will run the Flask server.
+
+## Starting the Flask Server
+From the `mergify\src\backend` folder, assuming the virtual environment is activated as described in Python virtual env, `python .\app.py` will run the Flask server.
 
 ## Authorization Flow
 
