@@ -40,21 +40,6 @@ const SpotifyAuth = () => {
     spotifyApi.setAccessToken(null);
   };
 
-//   return (
-//     <div>
-//       <Header />
-//       {token ? (
-//         <button onClick={handleLogout}>Logout</button>
-//       ) : (
-//         <button onClick={handleLogin}>Login to Spotify</button>
-//       )}
-//       <h1 className="text-4xl font-bold text-center text-green-500 mt-10">
-//   Tailwind is Working! 🎉
-// </h1>
-
-//     </div>
-//   );
-// };
 
 return (
   <div className="flex items-center justify-center min-h-screen">
@@ -63,11 +48,12 @@ return (
       {token ? (
         <button onClick={handleLogout}>Logout</button>
       ) : (
-        <button onClick={handleLogin}>Login to Spotify</button>
+        // <button onClick={handleLogin}>Login to Spotify</button>
+        <button onClick={handleLogin} type="button" class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Login to Spotify</button>
       )}
-      {/* <h1 className="text-4xl font-bold text-green-500 mt-10">
+      <h1 className="text-4xl font-bold text-blue-500 mt-10">
         Tailwind is Working! 🎉
-      </h1> */}
+      </h1>
     </div>
   </div>
 );
