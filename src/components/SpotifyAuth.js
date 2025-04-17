@@ -65,9 +65,9 @@ return (
       ) : (
         <button onClick={handleLogin}>Login to Spotify</button>
       )}
-      <h1 className="text-4xl font-bold text-green-500 mt-10">
+      {/* <h1 className="text-4xl font-bold text-green-500 mt-10">
         Tailwind is Working! 🎉
-      </h1>
+      </h1> */}
     </div>
   </div>
 );
