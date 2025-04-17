@@ -40,16 +40,38 @@ const SpotifyAuth = () => {
     spotifyApi.setAccessToken(null);
   };
 
-  return (
-    <div>
+//   return (
+//     <div>
+//       <Header />
+//       {token ? (
+//         <button onClick={handleLogout}>Logout</button>
+//       ) : (
+//         <button onClick={handleLogin}>Login to Spotify</button>
+//       )}
+//       <h1 className="text-4xl font-bold text-center text-green-500 mt-10">
+//   Tailwind is Working! 🎉
+// </h1>
+
+//     </div>
+//   );
+// };
+
+return (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
       <Header />
       {token ? (
         <button onClick={handleLogout}>Logout</button>
       ) : (
         <button onClick={handleLogin}>Login to Spotify</button>
       )}
+      <h1 className="text-4xl font-bold text-green-500 mt-10">
+        Tailwind is Working! 🎉
+      </h1>
     </div>
-  );
+  </div>
+);
 };
+
 
 export default SpotifyAuth;
