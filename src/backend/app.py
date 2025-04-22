@@ -106,8 +106,7 @@ def get_liked_exclusive_songs(sp):
         offset += limit
     only_liked = liked_track_ids - own_playlist_track_ids
 
-    return [item['track']['name'] for item in liked_only_songs if item['track']['id'] in only_liked]
-
+    return [item['track']['name'] for item in liked_only_songs if item['track']['id'] in only_liked] # TODO maybe remove the 'name' filter
 @app.route('/')
 def home():
     return "Mergify Flask Backend is running!"
@@ -165,6 +164,16 @@ def exchange_token():
         "access_token": token_data["access_token"],
         "refresh_token": token_data["refresh_token"]
     })
+
+@app.route('/get_liked_songs')
+def get_liked_songs():
+    sp = get_spotipy_client()
+    if sp is None:
+        return jsonify({"error": "User not authenticated"}), 400
+
+    liked_songs = get_liked_exclusive_songs(sp)
+    return jsonify({"liked_songs": liked_songs})
+
 
 if __name__ == '__main__':
     # app.run(debug=True, port=5000)
