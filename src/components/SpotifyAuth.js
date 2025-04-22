@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import spotifyApi from '../utils/spotify';
 import Header from './Header'
-import DarkButton from './DarkButton';
+import Button from './Button';
 
 const SpotifyAuth = () => {
   const [token, setToken] = useState(localStorage.getItem('spotify_access_token'));
@@ -42,21 +42,34 @@ const SpotifyAuth = () => {
   };
 
 
-return (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="text-center">
+// return (
+//   <div className="flex items-center justify-center min-h-screen">
+//     <div className="text-center">
+//       <Header />
+//       {token ? (
+//         <button onClick={handleLogout}>Logout</button>
+//       ) : (
+//           <Button onClick={handleLogin} label="Login with Spotify" />
+//       )}
+//       <h1 className="text-4xl font-bold text-blue-500 mt-10">
+//         Tailwind is Working! 🎉
+//       </h1>
+//     </div>
+//   </div>
+// );
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-white">
       <Header />
-      {token ? (
-        <button onClick={handleLogout}>Logout</button>
-      ) : (
-          <DarkButton onClick={handleLogin} label="Login with Spotify" />
-      )}
-      <h1 className="text-4xl font-bold text-blue-500 mt-10">
-        Tailwind is Working! 🎉
-      </h1>
+      <div className="mt-8">
+        {token ? (
+          <Button onClick={handleLogout} label="Logout" />
+        ) : (
+          <Button onClick={handleLogin} label="Login with Spotify" />
+        )}
+      </div>
+      <p className="text-gray-500 mt-10 text-sm">Tailwind is Working! 🎉</p>
     </div>
-  </div>
-);
+  );
 };
 
 

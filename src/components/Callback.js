@@ -48,7 +48,11 @@ const Callback = () => {
     fetchToken();
   }, [navigate]);
 
-  return <p>Processing authentication...</p>;
+  return (
+    <div className="h-screen flex items-center justify-center">
+  <p className="text-lg text-gray-600">Processing Spotify authentication...</p>
+</div>
+  )
 };
 
 

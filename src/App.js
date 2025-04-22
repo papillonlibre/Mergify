@@ -14,7 +14,7 @@ function App() {
         <Route path="/" element={<SpotifyAuth />} />
         <Route path="/callback" element={<Callback />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route component={PageNotFound} />
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </Router>
   );
