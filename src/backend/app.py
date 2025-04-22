@@ -6,44 +6,107 @@ import os
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from spotipy.exceptions import SpotifyException
+import logging
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin from React frontend
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
 FRONTEND_URI = os.getenv("FRONTEND_URI")
 
+SCOPES = [
+    'playlist-read-private',
+    'user-top-read',
+    'user-library-read',
+    'playlist-modify-public',
+    'playlist-modify-private',
+    'playlist-read-collaborative'
+]
 def get_spotipy_client():
-    scope = 'playlist-read-private'
-    # scope = "user-library-read" # not giving the right ones
-    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID,
-                                               client_secret=CLIENT_SECRET,
-                                               redirect_uri=REDIRECT_URI,
-                                               scope=scope))
-    return sp
+    try:
+        auth_manager = SpotifyOAuth(
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            redirect_uri=REDIRECT_URI,
+            scope=' '.join(SCOPES),
+        )
+        return spotipy.Spotify(auth_manager=auth_manager)
+    except Exception as e:
+        logger.error(f"Error creating Spotify client: {e}")
+        raise
 
 def get_user_playlists(sp):
-    results = sp.current_user_playlists(limit=50)
-    print(f"The number of playlists retrieved for me is {len(results)}")
-    for i, item in enumerate(results['items']):
-        print("%d %s" % (i, item['name']))
+    try:
+        results = sp.current_user_playlists(limit=50)
+        logger.info(f"Retrieved {len(results['items'])} playlists.")
+        return [item['name'] for item in results['items']]
+    except SpotifyException as e:
+        logger.error(f"Spotify error (playlists): {e}")
+        return []
+    except Exception as e:
+        logger.error(f"Unexpected error (playlists): {e}")
+        return []
 
 def get_user_top_artists(sp):
-    # scope = 'user-top-read'
-    # ranges = ['short_term', 'medium_term', 'long_term']
+    top_artists = {}
+    try:
+        for sp_range in ['short_term', 'medium_term', 'long_term']:
+            results = sp.current_user_top_artists(time_range=sp_range, limit=50)
+            top_artists[sp_range] = [artist['name'] for artist in results['items']]
+            logger.info(f"Retrieved {len(results['items'])} top artists for {sp_range}.")
+    except SpotifyException as e:
+        logger.error(f"Spotify error (top artists): {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error (top artists): {e}")
+    return top_artists
 
-    for sp_range in ['short_term', 'medium_term', 'long_term']:
-        print("range:", sp_range)
+def get_liked_exclusive_songs(sp):
+    user_id = sp.current_user()["id"]
+    liked_only_songs = []
+    limit = 50
+    offset = 0
+    while True:
+        results = sp.current_user_saved_tracks(limit=limit, offset=offset)
+        items = results['items']
+        if not items:
+            break
+        liked_only_songs.extend(items)
+        offset += limit
+    liked_track_ids = set(item['track']['id'] for item in liked_only_songs if item['track'])
 
-    results = sp.current_user_top_artists(time_range=sp_range, limit=50)
 
-    for i, item in enumerate(results['items']):
-        print(i, item['name'])
-    print()
+    own_playlist_track_ids = set()
+    limit = 50
+    offset = 0
+    while True:
+        playlists = sp.current_user_playlists(limit=limit, offset=offset)
+        if not playlists['items']:
+            break
+        for playlist in playlists['items']:
+            if playlist['owner']['id'] == user_id: # Fetch tracks from this playlist
+                playlist_id = playlist['id']
+                track_offset = 0
+                while True:
+                    tracks = sp.playlist_tracks(playlist_id, offset=track_offset)
+                    if not tracks['items']:
+                        break
+                    for item in tracks['items']:
+                        track = item.get('track')
+                        if track:
+                            own_playlist_track_ids.add(track['id'])
+                    track_offset += len(tracks['items'])
+        offset += limit
+    only_liked = liked_track_ids - own_playlist_track_ids
+
+    return [item['track']['name'] for item in liked_only_songs if item['track']['id'] in only_liked]
 
 @app.route('/')
 def home():
@@ -106,5 +169,11 @@ def exchange_token():
 if __name__ == '__main__':
     # app.run(debug=True, port=5000)
     sp = get_spotipy_client()
-    get_user_playlists(sp)
-    get_user_top_artists(sp)
+    playlists = get_user_playlists(sp)
+    top_artists = get_user_top_artists(sp)
+    for playlist in playlists:
+        print(playlist)
+    for artist in top_artists:
+        print(artist)
+    only_liked = get_liked_exclusive_songs(sp)
+    print(f"I have {len(only_liked)} liked songs that don't appear in any of my playlists and some of them are {only_liked[:10]}")
