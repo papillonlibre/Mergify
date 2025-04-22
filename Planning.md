@@ -13,11 +13,9 @@ Search and Filter: Include search and filter functionality to help users find sp
 Smart Merge Suggestions: Offer intelligent suggestions for merging similar playlists based on track similarities, genres, or user listening history. This can help users discover new music and create unified playlists based on their preferences.
     - highlight duplicates across similar playlists as a recommendation metric
 
-Collaborative Merging: Enable users to collaborate with others by sharing playlist merge links. This allows multiple users to contribute to a collaborative playlist merging process for collective curation.
-
 Playlist Backup: Provide an option for users to create a backup of their original playlists before merging, ensuring they can revert to their original playlists if needed.
 
-Integration with Spotify Features: Integrate with Spotify's features, such as the ability to save the merged playlist to their Spotify library, share the merged playlist on social media, or play the merged playlist directly within your app.
+Integration with Spotify Features:  ability to save the merged playlist to their Spotify library, share the merged playlist on social media, or play the merged playlist directly within the most recently active device using the app.
 
 Music visualization: Create a visual representation of a user's music library to somehow visualize percentage overlap accross playlists.
 
