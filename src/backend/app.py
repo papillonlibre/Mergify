@@ -4,6 +4,8 @@ from flask_cors import CORS
 import requests
 import os
 from dotenv import load_dotenv
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
 
 load_dotenv()
 
@@ -14,6 +16,34 @@ CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
 FRONTEND_URI = os.getenv("FRONTEND_URI")
+
+def get_spotipy_client():
+    scope = 'playlist-read-private'
+    # scope = "user-library-read" # not giving the right ones
+    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID,
+                                               client_secret=CLIENT_SECRET,
+                                               redirect_uri=REDIRECT_URI,
+                                               scope=scope))
+    return sp
+
+def get_user_playlists(sp):
+    results = sp.current_user_playlists(limit=50)
+    print(f"The number of playlists retrieved for me is {len(results)}")
+    for i, item in enumerate(results['items']):
+        print("%d %s" % (i, item['name']))
+
+def get_user_top_artists(sp):
+    # scope = 'user-top-read'
+    # ranges = ['short_term', 'medium_term', 'long_term']
+
+    for sp_range in ['short_term', 'medium_term', 'long_term']:
+        print("range:", sp_range)
+
+    results = sp.current_user_top_artists(time_range=sp_range, limit=50)
+
+    for i, item in enumerate(results['items']):
+        print(i, item['name'])
+    print()
 
 @app.route('/')
 def home():
@@ -74,4 +104,7 @@ def exchange_token():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # app.run(debug=True, port=5000)
+    sp = get_spotipy_client()
+    get_user_playlists(sp)
+    get_user_top_artists(sp)
