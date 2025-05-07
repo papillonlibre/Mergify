@@ -174,15 +174,41 @@ def get_liked_songs():
     liked_songs = get_liked_exclusive_songs(sp)
     return jsonify({"liked_songs": liked_songs})
 
+@app.route('/user/top-artists', methods=["GET"])
+def get_top_artists():
+    access_token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not access_token:
+        return jsonify({"error": "Missing access token"}), 401
+
+    try:
+        sp = get_spotipy_client()
+        top_artists = sp.current_user_top_artists(limit=5, time_range="short_term")
+
+        if not top_artists['items']:
+            return jsonify({"error": "No top artists found"}), 404
+
+        return jsonify([
+            {
+                "name": artist['name'],
+                "image": artist['images'][0]['url'] if artist.get("images") else None,
+                "genres": artist['genres'],
+                "popularity": artist['popularity']
+            }
+            for artist in top_artists['items']
+        ])
+    except Exception as e:
+        return jsonify({"error": "Failed to fetch top artists", "details": str(e)}), 500
+
+
 
 if __name__ == '__main__':
-    # app.run(debug=True, port=5000)
-    sp = get_spotipy_client()
-    playlists = get_user_playlists(sp)
-    top_artists = get_user_top_artists(sp)
-    for playlist in playlists:
-        print(playlist)
-    for artist in top_artists:
-        print(artist)
-    only_liked = get_liked_exclusive_songs(sp)
-    print(f"I have {len(only_liked)} liked songs that don't appear in any of my playlists and some of them are {only_liked[:10]}")
+    app.run(debug=True, port=5000)
+    # sp = get_spotipy_client()
+    # playlists = get_user_playlists(sp)
+    # top_artists = get_user_top_artists(sp)
+    # for playlist in playlists:
+    #     print(playlist)
+    # for artist in top_artists:
+    #     print(artist)
+    # only_liked = get_liked_exclusive_songs(sp)
+    # print(f"I have {len(only_liked)} liked songs that don't appear in any of my playlists and some of them are {only_liked[:10]}")

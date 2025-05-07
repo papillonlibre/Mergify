@@ -9,6 +9,7 @@ The developer dashboard is at https://developer.spotify.com/dashboard if you hav
 
 - For Tailwind, to integrate with React, it is necessary to ensure that the following packages are installed through npm with the following command: `npm install tailwindcss postcss autoprefixer`. Run this command from within the mergify root folder.
     - For Tailwind, the command `npx tailwindcss init -p` creates `tailwind.config.js` in the project root. This file is what configures Tailwind CSS for the project overall.
+    - For Tailwind, document can be found [here](https://nerdcave.com/tailwind-cheat-sheet) for the styling cheatsheet.
 
 ## How to host Flask websites
 https://github.com/orgs/community/discussions/68841
