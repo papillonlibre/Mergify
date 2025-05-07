@@ -33,10 +33,16 @@ const Dashboard = () => {
       <h2 className="text-2xl font-semibold mb-4 text-center">Your Dashboard</h2>
 
       {/* Top Artists Banner */}
-      <div className="bg-cyan-100 p-6 rounded-lg shadow mb-6">
-        <h3 className="text-lg font-medium mb-2">Your Top Artists (Last 4 Weeks)</h3>
+      <div className="flex items-center bg-cyan-100 p-6 rounded-lg shadow mb-6">
+        {/* <h3 className="text-lg font-medium mb-2">Your Top Artists (Last 4 Weeks)</h3> */}
+        <div className="mb-4">
+          <h3 className="text-lg font-medium">Your Top Artists</h3>
+          <span className="text-sm text-gray-600 block">(Last 4 Weeks)</span>
+        </div>
         {loading ? (
+          <div className="w-full flex justify-center">
           <p className="text-gray-500">Loading...</p>
+        </div>
         ) : topArtists.length > 0 ? (
           <div className="overflow-x-auto">
             <div className="flex space-x-4">
@@ -61,7 +67,9 @@ const Dashboard = () => {
             </div>
           </div>
         ) : (
-          <p className="text-gray-500">No top artists found.</p>
+          <div className="w-full flex justify-center">
+        <p className="text-gray-500">No top artists found.</p>
+      </div>
         )}
       </div>
 
