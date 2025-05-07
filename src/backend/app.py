@@ -1,5 +1,6 @@
 # backend/app.py
-from flask import Flask, redirect, request, jsonify, make_response
+from flask import Flask, redirect, session, request, jsonify, make_response
+from flask_session import Session
 from flask_cors import CORS
 import requests
 import os
@@ -12,7 +13,14 @@ import logging
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Allow cross-origin from React frontend
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = './.flask_session/'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = False
+Session(app)
+CORS(app, origins=["http://localhost:3000"], supports_credentials=True)  # Allow cross-origin from React frontend
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,12 +40,27 @@ SCOPES = [
 ]
 def get_spotipy_client():
     try:
+        token_info = {
+        "access_token": session.get("access_token"),
+        "refresh_token": session.get("refresh_token"),
+        "expires_at": session.get("expires_at")
+        }
+
+        if not token_info["access_token"]:
+            logger.warning("No token found in session")
+            return None
         auth_manager = SpotifyOAuth(
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
             redirect_uri=REDIRECT_URI,
             scope=' '.join(SCOPES),
         )
+        if auth_manager.is_token_expired(token_info):
+            logger.info("Token expired, refreshing...")
+            token_info = auth_manager.refresh_access_token(token_info['refresh_token'])
+            session["access_token"] = token_info["access_token"]
+            session["expires_at"] = token_info["expires_at"]
+
         return spotipy.Spotify(auth_manager=auth_manager)
     except Exception as e:
         logger.error(f"Error creating Spotify client: {e}")
@@ -123,47 +146,41 @@ def login():
     )
     return redirect(auth_url)
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(FRONTEND_URI)
+
 @app.route('/callback')
 def callback():
-    # Capture the query parameters from Spotify's redirect
-    code = request.args.get('code')
+    code = request.args.get('code') # Capture the query parameters from Spotify's redirect
 
     if not code:
-        return redirect(FRONTEND_URI)  # You can redirect to a custom error page if needed
+        return redirect(FRONTEND_URI) # TODO consider redirect to custom error page
+    try:
+        auth_manager = SpotifyOAuth(
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            redirect_uri=REDIRECT_URI,
+            scope=' '.join(SCOPES),
+            cache_handler=None  # disable default cache
+        )
 
-    # Add the `code` to the frontend redirect URL
-    redirect_url = f"{FRONTEND_URI}/callback?code={code}"
-    return redirect(redirect_url)
+        token_info = auth_manager.get_access_token(code, as_dict=True)
 
-@app.route('/exchange_token', methods=["POST"])
-def exchange_token():
-    code = request.json.get("code")
-    if not code:
-        return jsonify({"error": "No code found in request"}), 400
+        # Store tokens in the session
+        session["access_token"] = token_info["access_token"]
+        logger.info(f"Access Token: {session.get('access_token')}")
+        session["refresh_token"] = token_info["refresh_token"]
+        session["expires_at"] = token_info["expires_at"]
 
-    token_url = "https://accounts.spotify.com/api/token"
-    payload = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": REDIRECT_URI,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET
-    }
-
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-
-    r = requests.post(token_url, data=payload, headers=headers)
-    token_data = r.json()
-
-    if r.status_code != 200 or "access_token" not in token_data:
-        return jsonify({"error": "Token exchange failed", "details": token_data}), 400
-
-    return jsonify({
-        "access_token": token_data["access_token"],
-        "refresh_token": token_data["refresh_token"]
-    })
+        # Redirect to frontend dashboard (no token needed in URL!)
+        return redirect(f"{FRONTEND_URI}/dashboard")
+    except Exception as e:
+        logger.error(f"Error during callback: {e}")
+        return redirect(f"{FRONTEND_URI}?error=auth_failed")
+    # redirect_url = f"{FRONTEND_URI}/callback?code={code}"
+    # return redirect(redirect_url)
 
 @app.route('/get_liked_songs')
 def get_liked_songs():
@@ -176,12 +193,12 @@ def get_liked_songs():
 
 @app.route('/user/top-artists', methods=["GET"])
 def get_top_artists():
-    access_token = request.headers.get("Authorization", "").replace("Bearer ", "")
-    if not access_token:
-        return jsonify({"error": "Missing access token"}), 401
+    print("Session contents:", dict(session))
+    sp = get_spotipy_client()
+    if sp is None:
+        return jsonify({"error": "User not authenticated"}), 401
 
     try:
-        sp = get_spotipy_client()
         top_artists = sp.current_user_top_artists(limit=5, time_range="short_term")
 
         if not top_artists['items']:

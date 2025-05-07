@@ -5,16 +5,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('spotify_access_token');
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
     fetch('http://localhost:5000/user/top-artists', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      method: 'GET',
+      credentials: 'include' // ⬅️ Required to send session cookie
     })
       .then(res => res.json())
       .then(data => {
@@ -34,7 +27,6 @@ const Dashboard = () => {
 
       {/* Top Artists Banner */}
       <div className="flex items-center bg-cyan-100 p-6 rounded-lg shadow mb-6">
-        {/* <h3 className="text-lg font-medium mb-2">Your Top Artists (Last 4 Weeks)</h3> */}
         <div className="mb-4">
           <h3 className="text-lg font-medium">Your Top Artists</h3>
           <span className="text-sm text-gray-600 block">(Last 4 Weeks)</span>
