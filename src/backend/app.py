@@ -104,13 +104,12 @@ def home():
 
 @app.route('/login')
 def login():
-    scopes = "user-read-private playlist-read-private playlist-modify-private playlist-modify-public"
     auth_url = (
         "https://accounts.spotify.com/authorize"
         f"?client_id={CLIENT_ID}"
         "&response_type=code"
         f"&redirect_uri={REDIRECT_URI}"
-        f"&scope={scopes.replace(' ', '%20')}"
+        f"&scope={' '.join(SCOPES)}"
     )
     return redirect(auth_url)
 

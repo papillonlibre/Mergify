@@ -6,12 +6,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('spotify_access_token');
-    console.log("Token being used:", token); // Add this
+    console.log("Token being used:", token); // Log the token being used
+    
     if (!token) {
       setLoading(false);
       return;
     }
-    
+
     fetch('http://localhost:5000/user/top-artists', {
       headers: {
         Authorization: `Bearer ${token}`
@@ -19,7 +20,9 @@ const Dashboard = () => {
     })
       .then(res => res.json())
       .then(data => {
-        if (data && typeof data === 'object' && Array.isArray(data.short_term)) {
+        console.log(data)
+        if (data && typeof data === 'object' && (data.short_term || data.medium_term || data.long_term)) {
+          console.log("The typing seems right")
           setTopArtists(data); // Store entire object for potential future use
         } else {
           console.error('Unexpected data shape:', data);
@@ -41,8 +44,8 @@ const Dashboard = () => {
         </div>
         {loading ? (
           <div className="w-full flex justify-center">
-          <p className="text-gray-500">Loading...</p>
-        </div>
+            <p className="text-gray-500">Loading...</p>
+          </div>
         ) : topArtists.long_term?.length > 0 ? (
           <div className="overflow-x-auto">
             <div className="flex space-x-4">
@@ -64,8 +67,9 @@ const Dashboard = () => {
           <div className="w-full flex justify-center">
             <p className="text-gray-500">No top artists found.</p>
           </div>
-        )}  
+        )}
       </div>
+
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-cyan-50 p-4 rounded-lg shadow text-center">Liked Songs Analysis</div>
