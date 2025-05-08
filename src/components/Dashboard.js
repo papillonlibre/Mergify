@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from 'react';
 
 const Dashboard = () => {
-  const [topArtists, setTopArtists] = useState([]);
+  const [topArtists, setTopArtists] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('spotify_access_token');
+    console.log("Token being used:", token); // Add this
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    
     fetch('http://localhost:5000/user/top-artists', {
-      method: 'GET',
-      credentials: 'include' // ⬅️ Required to send session cookie
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          setTopArtists(data);
+        if (data && typeof data === 'object' && Array.isArray(data.short_term)) {
+          setTopArtists(data); // Store entire object for potential future use
         } else {
-          console.error('Error fetching top artists:', data);
+          console.error('Unexpected data shape:', data);
         }
       })
       .catch(err => console.error('Fetch failed:', err))
@@ -35,14 +43,11 @@ const Dashboard = () => {
           <div className="w-full flex justify-center">
           <p className="text-gray-500">Loading...</p>
         </div>
-        ) : topArtists.length > 0 ? (
+        ) : topArtists.long_term?.length > 0 ? (
           <div className="overflow-x-auto">
             <div className="flex space-x-4">
-              {topArtists.map((artist, idx) => (
-                <div
-                  key={idx}
-                  className="min-w-[120px] flex-shrink-0 text-center"
-                >
+              {topArtists.long_term.map((artist, idx) => (
+                <div key={idx} className="min-w-[120px] flex-shrink-0 text-center">
                   {artist.image && (
                     <img
                       src={artist.image}
@@ -51,20 +56,16 @@ const Dashboard = () => {
                     />
                   )}
                   <p className="mt-2 font-medium">{artist.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {artist.genres.slice(0, 2).join(', ')}
-                  </p>
                 </div>
               ))}
             </div>
           </div>
         ) : (
           <div className="w-full flex justify-center">
-        <p className="text-gray-500">No top artists found.</p>
+            <p className="text-gray-500">No top artists found.</p>
+          </div>
+        )}  
       </div>
-        )}
-      </div>
-
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-cyan-50 p-4 rounded-lg shadow text-center">Liked Songs Analysis</div>

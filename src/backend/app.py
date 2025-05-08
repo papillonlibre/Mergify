@@ -1,26 +1,17 @@
 # backend/app.py
-from flask import Flask, redirect, session, request, jsonify, make_response
-from flask_session import Session
+from flask import Flask, redirect, request, session, jsonify
 from flask_cors import CORS
 import requests
 import os
 from dotenv import load_dotenv
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
 from spotipy.exceptions import SpotifyException
 import logging
 
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_FILE_DIR'] = './.flask_session/'
-app.config['SESSION_PERMANENT'] = False
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = False
-Session(app)
-CORS(app, origins=["http://localhost:3000"], supports_credentials=True)  # Allow cross-origin from React frontend
+CORS(app)  # Allow cross-origin from React frontend
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,33 +29,24 @@ SCOPES = [
     'playlist-modify-private',
     'playlist-read-collaborative'
 ]
-def get_spotipy_client():
+def get_spotipy_client(access_token=None):
     try:
-        token_info = {
-        "access_token": session.get("access_token"),
-        "refresh_token": session.get("refresh_token"),
-        "expires_at": session.get("expires_at")
-        }
-
-        if not token_info["access_token"]:
-            logger.warning("No token found in session")
-            return None
-        auth_manager = SpotifyOAuth(
+        if access_token:
+            return spotipy.Spotify(auth=access_token)
+    
+        cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
+        auth_manager = spotipy.oauth2.SpotifyOAuth(
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
             redirect_uri=REDIRECT_URI,
             scope=' '.join(SCOPES),
+            cache_handler=cache_handler
         )
-        if auth_manager.is_token_expired(token_info):
-            logger.info("Token expired, refreshing...")
-            token_info = auth_manager.refresh_access_token(token_info['refresh_token'])
-            session["access_token"] = token_info["access_token"]
-            session["expires_at"] = token_info["expires_at"]
-
         return spotipy.Spotify(auth_manager=auth_manager)
     except Exception as e:
         logger.error(f"Error creating Spotify client: {e}")
         raise
+
 
 def get_user_playlists(sp):
     try:
@@ -72,24 +54,11 @@ def get_user_playlists(sp):
         logger.info(f"Retrieved {len(results['items'])} playlists.")
         return [item['name'] for item in results['items']]
     except SpotifyException as e:
-        logger.error(f"Spotify error (playlists): {e}")
+        logger.error(f"Spotify error fetching playlists for user {sp.current_user()['id']}: {e}")
         return []
     except Exception as e:
         logger.error(f"Unexpected error (playlists): {e}")
         return []
-
-def get_user_top_artists(sp):
-    top_artists = {}
-    try:
-        for sp_range in ['short_term', 'medium_term', 'long_term']:
-            results = sp.current_user_top_artists(time_range=sp_range, limit=50)
-            top_artists[sp_range] = [artist['name'] for artist in results['items']]
-            logger.info(f"Retrieved {len(results['items'])} top artists for {sp_range}.")
-    except SpotifyException as e:
-        logger.error(f"Spotify error (top artists): {e}")
-    except Exception as e:
-        logger.error(f"Unexpected error (top artists): {e}")
-    return top_artists
 
 def get_liked_exclusive_songs(sp):
     user_id = sp.current_user()["id"]
@@ -104,7 +73,6 @@ def get_liked_exclusive_songs(sp):
         liked_only_songs.extend(items)
         offset += limit
     liked_track_ids = set(item['track']['id'] for item in liked_only_songs if item['track'])
-
 
     own_playlist_track_ids = set()
     limit = 50
@@ -146,86 +114,107 @@ def login():
     )
     return redirect(auth_url)
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(FRONTEND_URI)
-
 @app.route('/callback')
 def callback():
     code = request.args.get('code') # Capture the query parameters from Spotify's redirect
 
     if not code:
-        return redirect(FRONTEND_URI) # TODO consider redirect to custom error page
-    try:
-        auth_manager = SpotifyOAuth(
-            client_id=CLIENT_ID,
-            client_secret=CLIENT_SECRET,
-            redirect_uri=REDIRECT_URI,
-            scope=' '.join(SCOPES),
-            cache_handler=None  # disable default cache
-        )
+        return redirect(FRONTEND_URI)  # TODO: redirect to a custom error page
 
-        token_info = auth_manager.get_access_token(code, as_dict=True)
+    # Add the `code` to the frontend redirect URL
+    redirect_url = f"{FRONTEND_URI}/callback?code={code}"
+    return redirect(redirect_url)
 
-        # Store tokens in the session
-        session["access_token"] = token_info["access_token"]
-        logger.info(f"Access Token: {session.get('access_token')}")
-        session["refresh_token"] = token_info["refresh_token"]
-        session["expires_at"] = token_info["expires_at"]
+@app.route('/exchange_token', methods=["POST"])
+def exchange_token():
+    code = request.json.get("code")
+    if not code:
+        return jsonify({"error": "No code found in request"}), 400
 
-        # Redirect to frontend dashboard (no token needed in URL!)
-        return redirect(f"{FRONTEND_URI}/dashboard")
-    except Exception as e:
-        logger.error(f"Error during callback: {e}")
-        return redirect(f"{FRONTEND_URI}?error=auth_failed")
-    # redirect_url = f"{FRONTEND_URI}/callback?code={code}"
-    # return redirect(redirect_url)
+    token_url = "https://accounts.spotify.com/api/token"
+    payload = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": REDIRECT_URI,
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET
+    }
+
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    r = requests.post(token_url, data=payload, headers=headers)
+    token_data = r.json()
+
+    if r.status_code != 200 or "access_token" not in token_data:
+        return jsonify({"error": "Token exchange failed", "details": token_data}), 400
+
+    return jsonify({
+        "access_token": token_data["access_token"],
+        "refresh_token": token_data["refresh_token"]
+    })
 
 @app.route('/get_liked_songs')
 def get_liked_songs():
-    sp = get_spotipy_client()
-    if sp is None:
-        return jsonify({"error": "User not authenticated"}), 400
+    access_token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not access_token:
+        return jsonify({"error": "Missing access token"}), 401
 
+    sp = get_spotipy_client(access_token)
     liked_songs = get_liked_exclusive_songs(sp)
     return jsonify({"liked_songs": liked_songs})
 
+
+@app.route('/fetch_playlists')
+def fetch_playlists():
+    access_token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not access_token:
+        return jsonify({"error": "Missing access token"}), 401
+
+    sp = get_spotipy_client(access_token)
+    playlists = get_user_playlists(sp)
+    return jsonify({"playlists": playlists})
+
 @app.route('/user/top-artists', methods=["GET"])
-def get_top_artists():
-    print("Session contents:", dict(session))
-    sp = get_spotipy_client()
-    if sp is None:
-        return jsonify({"error": "User not authenticated"}), 401
+def get_all_top_artists():
+    access_token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not access_token:
+        return jsonify({"error": "Missing access token"}), 401
+
+    time_ranges = ['short_term', 'medium_term', 'long_term']
+    requested_range = request.args.get("range")  # Optional ?range=short_term
+    limit = int(request.args.get("limit", 5))
+    simple = request.args.get("simple", "false").lower() == "true"
+
+    if requested_range and requested_range not in time_ranges:
+        return jsonify({"error": "Invalid range value"}), 400
 
     try:
-        top_artists = sp.current_user_top_artists(limit=5, time_range="short_term")
+        sp = get_spotipy_client(access_token)
+        result = {}
 
-        if not top_artists['items']:
-            return jsonify({"error": "No top artists found"}), 404
+        ranges_to_query = [requested_range] if requested_range else time_ranges
 
-        return jsonify([
-            {
-                "name": artist['name'],
-                "image": artist['images'][0]['url'] if artist.get("images") else None,
-                "genres": artist['genres'],
-                "popularity": artist['popularity']
-            }
-            for artist in top_artists['items']
-        ])
+        for r in ranges_to_query:
+            artists = sp.current_user_top_artists(time_range=r, limit=limit)['items']
+            if simple:
+                result[r] = [artist['name'] for artist in artists]
+            else:
+                result[r] = [
+                    {
+                        "name": artist['name'],
+                        "image": artist['images'][0]['url'] if artist.get("images") else None,
+                        "genres": artist['genres']
+                    }
+                    for artist in artists
+                ]
+        return jsonify(result)
+
     except Exception as e:
+        logger.error(f"Error fetching top artists: {e}")
         return jsonify({"error": "Failed to fetch top artists", "details": str(e)}), 500
-
 
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-    # sp = get_spotipy_client()
-    # playlists = get_user_playlists(sp)
-    # top_artists = get_user_top_artists(sp)
-    # for playlist in playlists:
-    #     print(playlist)
-    # for artist in top_artists:
-    #     print(artist)
-    # only_liked = get_liked_exclusive_songs(sp)
-    # print(f"I have {len(only_liked)} liked songs that don't appear in any of my playlists and some of them are {only_liked[:10]}")
