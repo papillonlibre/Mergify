@@ -3,6 +3,7 @@ Goal: to build out a website that allows users of Spotify to merge together play
 
 ## Additional Features Planned
 
+Duplicate songs preview: a problem I have run into is accidentally liking different versions of the same song without realizing it (examples include the original album and the delux version). Therefore, this panel overview shows the user any songs that are duplicated determined by same title and same artist (since different singers sometimes have the same song titles). Furthermore, it will display the album name and date added for each of these songs and enable the user to choose if they want to make any modifications such as removing one version of the song from all their playlists.
 
 Playlist Preview: Show a preview of the playlists to be merged, displaying key details such as playlist name, track count, and duration. This allows users to review and confirm their selection before merging.
 
