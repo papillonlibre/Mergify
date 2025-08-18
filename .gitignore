@@ -3,3 +3,4 @@
 /src/backend/.flask_session/**
 node_modules/
 .cache
+.vscode

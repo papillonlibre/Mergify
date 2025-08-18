@@ -33,7 +33,7 @@ def get_spotipy_client(access_token=None):
     try:
         if access_token:
             return spotipy.Spotify(auth=access_token)
-    
+        
         cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
         auth_manager = spotipy.oauth2.SpotifyOAuth(
             client_id=CLIENT_ID,
@@ -82,7 +82,7 @@ def get_liked_exclusive_songs(sp):
         if not playlists['items']:
             break
         for playlist in playlists['items']:
-            if playlist['owner']['id'] == user_id: # Fetch tracks from this playlist
+            if playlist['owner']['id'] == user_id:
                 playlist_id = playlist['id']
                 track_offset = 0
                 while True:
@@ -97,7 +97,7 @@ def get_liked_exclusive_songs(sp):
         offset += limit
     only_liked = liked_track_ids - own_playlist_track_ids
 
-    return [item['track']['name'] for item in liked_only_songs if item['track']['id'] in only_liked] # TODO maybe remove the 'name' filter
+    return [item['track']['name'] for item in liked_only_songs if item['track']['id'] in only_liked]
 @app.route('/')
 def home():
     return "Mergify Flask Backend is running!"
