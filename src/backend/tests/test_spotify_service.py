@@ -15,6 +15,13 @@ class TestSpotifyService(unittest.TestCase):
         }
         playlists = get_user_playlists(sp)
         self.assertEqual(playlists, ["Playlist A", "Playlist B"])
+        
+    def test_get_user_playlists_returns_names_none(self):
+        sp = MagicMock()
+        sp.current_user_playlists.return_value = {"items": []}
+        playlists = get_user_playlists(sp)
+        self.assertEqual(playlists, [])
+
 
     def test_get_liked_exclusive_songs(self):
         sp = MagicMock()
