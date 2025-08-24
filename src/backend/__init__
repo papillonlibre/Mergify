@@ -1,0 +1,9 @@
+"""
+This __init__.py makes the `backend` directory a Python package. It is particularly needed
+in order to allow the unit tests to be runnable.
+
+You can also use this file to:
+- Expose package-wide variables
+- Import submodules for easier access
+- Add package-level docstrings
+"""

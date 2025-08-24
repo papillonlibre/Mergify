@@ -14,6 +14,12 @@ The developer dashboard is at https://developer.spotify.com/dashboard if you hav
 ## How to host Flask websites
 https://github.com/orgs/community/discussions/68841
 
+## How to run the backend tests
+
+From the src directory run the following `python -m unittest discover backend/tests`. This will run all the unit tests written
+for the Spotify-specific logic, not the business logic (routes) that communicate with the HTTP server to interact with React. These tests
+are designed to test the purely Pythonic logic/functionality, which can be thought of as the models compared to the controllers (in this case, the Flask routes.) 
+
 
 ## Python virtual env
 
