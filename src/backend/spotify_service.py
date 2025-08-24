@@ -25,6 +25,19 @@ SCOPES = [
     'playlist-read-collaborative'
 ]
 
+def paginate_spotify(sp_func, limit=50, **kwargs):
+    """Generic paginator for Spotify endpoints that uses limit/offset"""
+    results = []
+    offset = 0
+    while True:
+        page = sp_func(limit=limit, offset=offset, **kwargs)
+        items = page.get('items', [])
+        if not items:
+            break
+        results.extend(items)
+        offset += limit
+    return results
+
 def get_spotipy_client(access_token=None):
     """Create a Spotipy client, either from a raw access_token or via OAuth."""
     try:
@@ -45,8 +58,8 @@ def get_spotipy_client(access_token=None):
 def get_user_playlists(sp):
     """Return names of the user's playlists."""
     try:
-        results = sp.current_user_playlists(limit=50)
-        return [item['name'] for item in results['items']]
+        playlists = paginate_spotify(sp.current_user_playlists)
+        return [p['name'] for p in playlists]
     except SpotifyException as e:
         logger.error(f"Spotify error fetching playlists: {e}")
         return []
@@ -58,42 +71,32 @@ def get_liked_exclusive_songs(sp):
     """Return liked songs that are not in the user's own playlists."""
     user_id = sp.current_user()["id"]
 
-    # Get all liked songs
-    liked_songs = []
-    limit, offset = 50, 0
-    while True:
-        results = sp.current_user_saved_tracks(limit=limit, offset=offset)
-        items = results['items']
-        if not items:
-            break
-        liked_songs.extend(items)
-        offset += limit
-
+    liked_songs = paginate_spotify(sp.current_user_saved_tracks)
     liked_ids = {item['track']['id'] for item in liked_songs if item['track']}
 
-    # Collect tracks from user's own playlists
     own_ids = set()
-    offset = 0
-    while True:
-        playlists = sp.current_user_playlists(limit=50, offset=offset)
-        if not playlists['items']:
-            break
-        for playlist in playlists['items']:
-            if playlist['owner']['id'] == user_id:
-                track_offset = 0
-                while True:
-                    tracks = sp.playlist_tracks(playlist['id'], offset=track_offset)
-                    if not tracks['items']:
-                        break
-                    for item in tracks['items']:
-                        track = item.get('track')
-                        if track:
-                            own_ids.add(track['id'])
-                    track_offset += len(tracks['items'])
-        offset += 50
+    playlists = paginate_spotify(sp.current_user_playlists)
+    for playlist in playlists:
+        if playlist['owner']['id'] != user_id:
+            continue
+        tracks = paginate_spotify(sp.playlist_tracks, playlist_id=playlist['id'])
+        for item in tracks:
+            track = item.get('track')
+            if track:
+                own_ids.add(track['id'])
 
     only_liked = liked_ids - own_ids
-    return [item['track']['name'] for item in liked_songs if item['track']['id'] in only_liked]
+    # Return richer metadata for each liked song
+    return [
+        {
+            "id": item['track']['id'],
+            "name": item['track']['name'],
+            "artists": [a['name'] for a in item['track']['artists']],
+            "album": item['track']['album']['name'],
+            "image": item['track']['album']['images'][0]['url'] if item['track']['album']['images'] else None
+        }
+        for item in liked_songs if item['track']['id'] in only_liked
+    ]
 
 def fetch_top_artists(sp, requested_range=None, limit=5, simple=False):
     """Fetch user's top artists for one or multiple ranges."""

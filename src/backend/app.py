@@ -9,7 +9,7 @@ from spotify_service import (
     get_spotipy_client,
     get_user_playlists,
     get_liked_exclusive_songs,
-    fetch_top_artists
+    fetch_top_artists, SCOPES
 )
 
 # Load env variables
@@ -39,7 +39,7 @@ def login():
         f"?client_id={CLIENT_ID}"
         "&response_type=code"
         f"&redirect_uri={REDIRECT_URI}"
-        f"&scope={' '.join(fetch_top_artists.__globals__['SCOPES'])}"
+        f"&scope={' '.join(SCOPES)}"
     )
     return redirect(auth_url)
 
